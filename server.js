@@ -5,8 +5,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const GROQ_API_KEY = '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';
-
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SYSTEM_PROMPT = `You are Bella, a friendly AI assistant for Pizza Palace restaurant in Gulshan 2, Dhaka, Bangladesh. Phone: +880 1712-345678.
 
 OPENING HOURS: Mon-Thu 11AM-11PM, Fri-Sat 11AM-12AM, Sun 12PM-10PM.
