@@ -5,7 +5,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const SYSTEM_PROMPT = `You are Bella, a friendly AI assistant for Pizza Palace restaurant in Gulshan 2, Dhaka, Bangladesh. Phone: +880 1712-345678.
 
 OPENING HOURS: Mon-Thu 11AM-11PM, Fri-Sat 11AM-12AM, Sun 12PM-10PM.
@@ -37,12 +36,20 @@ app.get('/', (req, res) => {
 app.post('/chat', async (req, res) => {
   try {
     const { messages } = req.body;
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+      console.error('GROQ_API_KEY not set!');
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    console.log('Calling Groq API...');
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'llama3-8b-8192',
@@ -56,19 +63,25 @@ app.post('/chat', async (req, res) => {
     });
 
     const data = await response.json();
+    console.log('Groq response status:', response.status);
 
     if (!response.ok) {
-      console.error('Groq error:', data);
+      console.error('Groq error:', JSON.stringify(data));
       return res.status(500).json({ error: data.error?.message || 'Groq API error' });
     }
 
-    res.json({ reply: data.choices[0].message.content.trim() });
+    const reply = data.choices[0].message.content.trim();
+    console.log('Reply:', reply.substring(0, 50));
+    res.json({ reply });
 
   } catch (err) {
-    console.error('Server error:', err);
+    console.error('Server error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`SmartBot server running on port ${PORT}`));
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`SmartBot server running on port ${PORT}`);
+  console.log(`GROQ_API_KEY set: ${!!process.env.GROQ_API_KEY}`);
+});
